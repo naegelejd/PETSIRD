@@ -6,14 +6,16 @@
 */
 
 // (un)comment if you want HDF5 or binary output
-#define USE_HDF5
+// #define USE_HDF5
 
 #ifdef USE_HDF5
 #  include "generated/hdf5/protocols.h"
 using petsird::hdf5::PETSIRDReader;
 #else
 #  include "generated/binary/protocols.h"
+using petsird::PETSIRDReaderBase;
 using petsird::binary::PETSIRDReader;
+using petsird::binary::PETSIRDIndexedReader;
 #endif
 #include <xtensor/xview.hpp>
 #include <xtensor/xio.hpp>
@@ -23,19 +25,17 @@ using petsird::binary::PETSIRDReader;
 int
 main(int argc, char* argv[])
 {
-  // Check if the user has provided a file
-  if (argc < 2)
-    {
-      std::cerr << "Please provide a file to read" << std::endl;
-      return 1;
-    }
+  std::unique_ptr<PETSIRDReaderBase> pReader;
+  if (argc > 1) {
+    pReader = std::make_unique<PETSIRDIndexedReader>(argv[1]);
+  } else {
+    pReader = std::make_unique<PETSIRDReader>(std::cin);
+  }
 
-  // Open the file
-  PETSIRDReader reader(argv[1]);
+  auto& reader = *pReader;
   petsird::Header header;
   reader.ReadHeader(header);
 
-  std::cout << "Processing file: " << argv[1] << std::endl;
   if (header.exam) // only do this if present
     std::cout << "Subject ID: " << header.exam->subject.id << std::endl;
   std::cout << "Types of modules: " << header.scanner.scanner_geometry.replicated_modules.size() << std::endl;

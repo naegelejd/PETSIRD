@@ -4,6 +4,7 @@ channels:
   - defaults
 dependencies:
   - bash-completion>=2.11
+  - ccache=4.5.1
   - cmake>=3.21.3
   - fmt>=8.1.1
   - compilers
@@ -11,6 +12,7 @@ dependencies:
   - hdf5>=1.12.1
   - howardhinnant_date>=3.0.1
   - ipykernel>=6.19.2
+  - just>=1.36.0
   - ninja>=1.11.0
   - nlohmann_json>=3.11.2
   - numpy>=1.24.3

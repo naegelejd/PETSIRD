@@ -157,7 +157,7 @@ if __name__ == "__main__":
     # numpy random number generator
     rng = numpy.random.default_rng()
 
-    with petsird.BinaryPETSIRDWriter(sys.stdout.buffer) as writer:
+    with petsird.BinaryPETSIRDIndexedWriter(sys.stdout.buffer) as writer:
         # with petsird.NDJsonPETSIRDWriter(sys.stdout) as writer:
         header = get_header()
         writer.write_header(header)

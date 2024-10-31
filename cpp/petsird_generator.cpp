@@ -10,7 +10,7 @@
 #include <random>
 
 // (un)comment if you want HDF5 or binary output
-#define USE_HDF5
+// #define USE_HDF5
 
 #ifdef USE_HDF5
 #  include "generated/hdf5/protocols.h"
@@ -18,6 +18,7 @@ using petsird::hdf5::PETSIRDWriter;
 #else
 #  include "generated/binary/protocols.h"
 using petsird::binary::PETSIRDWriter;
+using petsird::binary::PETSIRDIndexedWriter;
 #endif
 
 // these are constants for now
@@ -196,16 +197,15 @@ get_events(const petsird::Header&, std::size_t num_events)
 int
 main(int argc, char* argv[])
 {
-  // Check if the user has provided a file
-  if (argc < 2)
-    {
-      std::cerr << "Please provide a filename to write to" << std::endl;
-      return 1;
-    }
+  using WriterType = PETSIRDIndexedWriter;
+  std::unique_ptr<WriterType> pWriter;
+  if (argc > 1) {
+    pWriter = std::make_unique<WriterType>(argv[1]);
+  } else {
+    pWriter = std::make_unique<WriterType>(std::cout);
+  }
 
-  std::string outfile = argv[1];
-  std::remove(outfile.c_str());
-  PETSIRDWriter writer(outfile);
+  WriterType& writer = *pWriter;
 
   const auto header = get_header();
   writer.WriteHeader(header);
