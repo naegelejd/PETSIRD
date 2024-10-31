@@ -1,0 +1,16 @@
+MyProtocol: !protocol
+  sequence:
+    header: Header
+    samples: !stream
+      items: Sample
+
+Header: !record
+  fields:
+    subject: string
+
+Sample: !record
+  fields:
+    id: uint
+    data: !array
+      items: int
+      dimensions: 1
