@@ -30,17 +30,15 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 ARG CONDA_GID=900
 ARG CONDA_ENVIRONMENT_NAME=petsird
-ARG VSCODE_DEV_CONTAINERS_SCRIPT_LIBRARY_VERSION=v0.229.0
 
 RUN apt-get update && apt-get install -y \
     libc6-dbg \
     && rm -rf /var/lib/apt/lists/*
 
 # Enable non-root Docker access in container
-ARG ENABLE_NONROOT_DOCKER="true"
-# Use the OSS Moby CLI instead of the licensed Docker CLI
-ARG USE_MOBY="false"
-RUN script=$(curl -fsSL "https://raw.githubusercontent.com/microsoft/vscode-dev-containers/${VSCODE_DEV_CONTAINERS_SCRIPT_LIBRARY_VERSION}/script-library/docker-debian.sh") && bash -c "$script" -- "${ENABLE_NONROOT_DOCKER}" "/var/run/docker-host.sock" "/var/run/docker.sock" "${USERNAME}" "${USE_MOBY}"
+ARG DOCKER_VERSION="27.0.3"
+RUN script=$(curl -fsSL "https://raw.githubusercontent.com/devcontainers/features/2951f0481a488ea43a6f2ea6f18a47f0a0bf744d/src/docker-outside-of-docker/install.sh") \
+    && VERSION=${DOCKER_VERSION} DOCKERDASHCOMPOSEVERSION="none" bash -c "$script"
 
 # Setting the ENTRYPOINT to docker-init.sh will configure non-root access to
 # the Docker socket if "overrideCommand": false is set in devcontainer.json.
@@ -48,10 +46,8 @@ RUN script=$(curl -fsSL "https://raw.githubusercontent.com/microsoft/vscode-dev-
 ENTRYPOINT [ "/usr/local/share/docker-init.sh" ]
 CMD [ "sleep", "infinity" ]
 
-ARG MAMBAFORGE_VERSION=24.9.0-0
-
 # Based on https://github.com/conda-forge/miniforge-images/blob/master/ubuntu/Dockerfile
-RUN wget --no-hsts --quiet https://github.com/conda-forge/miniforge/releases/download/${MAMBAFORGE_VERSION}/Mambaforge-${MAMBAFORGE_VERSION}-Linux-$(uname -m).sh -O /tmp/miniforge.sh \
+RUN wget --no-hsts --quiet https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh -O /tmp/miniforge.sh \
     && /bin/bash /tmp/miniforge.sh -b -p /opt/conda \
     && rm /tmp/miniforge.sh \
     && /opt/conda/bin/conda clean --tarballs --index-cache --packages --yes \
@@ -67,8 +63,8 @@ RUN wget --no-hsts --quiet https://github.com/conda-forge/miniforge/releases/dow
 # Create a conda environment from the environment file in the repo root.
 COPY --from=file-normalizer --chown=$USER_UID:conda /data/environment.yml /tmp/build/
 RUN umask 0002 \
-    && /opt/conda/bin/mamba env create -f /tmp/build/environment.yml \
-    && /opt/conda/bin/mamba clean -fy \
+    && /opt/conda/bin/conda env create -f /tmp/build/environment.yml \
+    && /opt/conda/bin/conda clean -fy \
     && sudo chown -R :conda /opt/conda/envs
 
 # Add a file that is to be sourced from .bashrc and from the devops pipeline stages
