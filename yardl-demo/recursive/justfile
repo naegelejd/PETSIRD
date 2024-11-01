@@ -1,19 +1,11 @@
 set shell := ['bash', '-ceuo', 'pipefail']
 
-cpp_version := "17"
-
-matlab := "disabled"
-matlab-test-cmd := if matlab != "disabled" { "run-matlab-command run_tests" } else { "echo Skipping Matlab tests..." }
-matlab-sandbox-cmd := if matlab != "disabled" { "run-matlab-command run_sandbox" } else { "echo Skipping Matlab sandbox..." }
-benchmark-cmd := if matlab != "disabled" { "python python/benchmark.py --include-matlab" } else { "python python/benchmark.py" }
-
-
 @default: run
 
 @configure:
     mkdir -p cpp/build; \
     cd cpp/build; \
-    cmake -GNinja -D CMAKE_CXX_STANDARD={{ cpp_version }} ..
+    cmake -GNinja ..
 
 @generate:
     cd model && yardl generate
@@ -21,8 +13,12 @@ benchmark-cmd := if matlab != "disabled" { "python python/benchmark.py --include
 @build: generate configure
     cd cpp/build && ninja
 
-@run: build
-    echo "C++ demo:"; \
-    ./cpp/build/recursive; \
-    echo "Python demo:"; \
+@run: run-cpp run-python
+
+@run-cpp: build
+    echo "-------- C++ demo --------"; \
+    ./cpp/build/demo;
+
+@run-python: generate
+    echo "-------- Python demo --------"; \
     python python/main.py

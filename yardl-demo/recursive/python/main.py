@@ -6,7 +6,6 @@ from io import BytesIO
 
 
 def read_directory(path):
-    # os.path.
     for dirent in os.scandir(path):
         if dirent.is_dir():
             d = sketch.Directory(
@@ -54,6 +53,7 @@ def walkTree(root, fn):
 
 
 def main():
+    # First, build recursive types
     root = sketch.BinaryTree()
     for i in range(32):
         root = insertTree(root, random.randint(-50, 50))
@@ -64,20 +64,18 @@ def main():
     llist.next = sketch.LinkedList(value="World")
     llist.next.next = sketch.LinkedList(value="!!!")
 
+    cwd = read_directory(".")
+
+    # Next, write them to a binary stream
     stream = BytesIO()
     with sketch.BinaryMyProtocolWriter(stream) as writer:
         writer.write_tree(root)
         writer.write_ptree(root)
-
         writer.write_list(llist)
-
-        writer.write_cwd(read_directory("."))
-
+        writer.write_cwd(cwd)
         writer.close()
 
-    # print(len(stream.getvalue()))
-    # print(str(stream.getvalue()))
-
+    # Finally, read them back from the binary stream
     stream = BytesIO(stream.getvalue())
     with sketch.BinaryMyProtocolReader(stream) as reader:
         walkTree(reader.read_tree(), lambda x: print(x, end=" "))

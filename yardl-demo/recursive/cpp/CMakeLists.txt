@@ -42,5 +42,5 @@ endif()
 
 add_subdirectory(generated)
 
-add_executable(recursive main.cc)
-target_link_libraries(recursive sketch_generated)
+add_executable(demo main.cc)
+target_link_libraries(demo sketch_generated)

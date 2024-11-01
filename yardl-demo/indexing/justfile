@@ -1,13 +1,11 @@
 set shell := ['bash', '-ceuo', 'pipefail']
 
-cpp_version := "17"
-
 @default: run
 
 @configure:
     mkdir -p cpp/build; \
     cd cpp/build; \
-    cmake -GNinja -D CMAKE_CXX_STANDARD={{ cpp_version }} ..
+    cmake -GNinja ..
 
 @generate:
     cd model && yardl generate
@@ -19,7 +17,7 @@ cpp_version := "17"
 
 @run-cpp: build
     echo "-------- C++ demo --------"; \
-    ./cpp/build/sketch; \
+    ./cpp/build/demo; \
 
 @run-python: generate
     echo "-------- Python demo --------"; \

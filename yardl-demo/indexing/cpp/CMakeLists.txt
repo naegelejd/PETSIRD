@@ -35,5 +35,5 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR})
 add_compile_options(-Wall -Wextra -pedantic -Werror -Wno-psabi)
 
 add_subdirectory(generated)
-add_executable(sketch main.cc)
-target_link_libraries(sketch sketch_generated)
+add_executable(demo main.cc)
+target_link_libraries(demo sketch_generated)

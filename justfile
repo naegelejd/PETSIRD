@@ -1,7 +1,5 @@
 set shell := ['bash', '-ceuo', 'pipefail']
 
-cpp_version := "17"
-
 matlab := "disabled"
 matlab-test-cmd := if matlab != "disabled" { "run-matlab-command run_tests" } else { "echo Skipping Matlab tests..." }
 matlab-sandbox-cmd := if matlab != "disabled" { "run-matlab-command run_sandbox" } else { "echo Skipping Matlab sandbox..." }
@@ -13,7 +11,7 @@ benchmark-cmd := if matlab != "disabled" { "python python/benchmark.py --include
 @configure:
     mkdir -p cpp/build; \
     cd cpp/build; \
-    cmake -GNinja -D CMAKE_CXX_STANDARD={{ cpp_version }} ..
+    cmake -GNinja ..
 
 @ensure-configured:
     if [ ! -f cpp/build/CMakeCache.txt ]; then \
