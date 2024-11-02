@@ -83,6 +83,7 @@ int main(void) {
       while (reader.ReadSamples(sample)) {
         VALIDATE(sample.id == idx++, "Failed to read correct sample");
       }
+      VALIDATE(reader.CountSamples() == sample_count, "Failed to get correct sample count");
       VALIDATE(idx == sample_count, "Failed to read all samples");
 
       // Read the Header *after* reading the entire stream
@@ -99,7 +100,7 @@ int main(void) {
       // First, read a few samples from the middle of the stream
       std::vector<sketch::Sample> samples;
       samples.reserve(9);
-      auto idx = sample_count / 2;
+      auto idx = reader.CountSamples() / 2;
       VALIDATE(reader.ReadSamples(samples, idx), "Failed to read samples from the middle of the stream");
       for (auto const& sample : samples) {
         VALIDATE(sample.id == idx++, "Failed to read correct sample");
@@ -125,13 +126,14 @@ int main(void) {
     std::random_device rd;
     std::mt19937 g(rd());
 
-    std::vector<size_t> indices(sample_count);
-    for (size_t i = 0; i < sample_count; i++) {
+    VALIDATE(reader.CountSamples() == sample_count, "CountSamples() failed");
+
+    std::vector<size_t> indices(reader.CountSamples());
+    for (size_t i = 0; i < reader.CountSamples(); i++) {
       indices[i] = i;
     }
     std::shuffle(indices.begin(), indices.end(), g);
 
-    VALIDATE(reader.CountSamples() == sample_count, "CountSamples() failed");
 
     sketch::Sample sample;
     for (size_t idx : indices) {
