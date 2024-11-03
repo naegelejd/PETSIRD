@@ -2,16 +2,17 @@ import sketch
 from io import BytesIO
 import itertools
 import numpy as np
+import random
 
 HEADER = sketch.Header(subject="Hello World!")
 
 
-def generate_samples(N, start=0):
+def generate_samples(N, *, start=0):
     for i in range(N):
         v = i + start
         # Intentionally generating a "large" NumPy array for each sample
         # to test the underlying Indexing mechanisms.
-        yield sketch.Sample(id=v, data=np.arange(v, v + 1000, dtype=np.int32))
+        yield sketch.Sample(id=v, data=np.arange(v, v + 2000, dtype=np.int32))
 
 
 def main():
@@ -77,28 +78,58 @@ def test_stream_read():
     stream = BytesIO()
     with sketch.BinaryMyProtocolIndexedWriter(stream) as writer:
         writer.write_header(HEADER)
-        writer.write_samples(list(generate_samples(77)))
-        writer.write_samples(generate_samples(33, 77))
-        writer.write_samples(list(generate_samples(55, 33 + 77)))
+        writer.write_samples(list(generate_samples(44)))
+        writer.write_samples(generate_samples(22, start=44))
+        writer.write_samples(list(generate_samples(33, start=44 + 22)))
 
-    total_samples = 77 + 33 + 55
+    total_samples = 44 + 22 + 33
 
     # First, test reading the entire stream without the Index
+    print("Reading samples... ", end="")
     stream.seek(0)
     with sketch.BinaryMyProtocolIndexedReader(stream) as reader:
         samples_read = list(reader.read_samples())
+        for i, s in enumerate(samples_read):
+            assert s.id == i, f"Expected {i}, got {s.id}"
+            print(f"{s.id} ", end="")
 
         assert reader.read_header() == HEADER
         assert reader.count_samples() == total_samples
         assert len(samples_read) == total_samples
+    print("")
 
-    # Next, test reading the stream in batches from varying start indices
+    # Next, test reading random stream items
+    indices = list(range(total_samples))
+    random.shuffle(indices)
+    print(f"Reading sample ... ", end="")
     stream.seek(0)
     with sketch.BinaryMyProtocolIndexedReader(stream) as reader:
-        for start in range(0, total_samples, 15):
-            samples_read = list(itertools.islice(reader.read_samples(idx=start), 15))
-            for i, s in enumerate(samples_read):
-                assert s.id == i + start, f"Expected {i + start}, got {s.id}"
+        for i in indices:
+            sample_read = next(reader.read_samples(idx=i))
+            assert sample_read.id == i, f"Expected {i}, got {sample_read.id}"
+            print(f"{sample_read.id} ", end="")
+    print("")
+
+    # Next, test reading the stream in batches from varying start indices
+    cfgs = [
+        (7, 3),
+        (0, 15),
+        (39, 7),
+        (17, 24),
+    ]
+    stream.seek(0)
+    with sketch.BinaryMyProtocolIndexedReader(stream) as reader:
+        for start, count in cfgs:
+            print("Reading samples... ", end="")
+            for idx in range(start, total_samples, count):
+                samples_read = list(
+                    itertools.islice(reader.read_samples(idx=idx), count)
+                )
+                for i, s in enumerate(samples_read):
+                    assert s.id == i + idx, f"Expected {i + idx}, got {s.id}"
+                    print(f"{s.id} ", end="")
+                print(", ", end="")
+            print()
 
         assert reader.read_header() == HEADER
 

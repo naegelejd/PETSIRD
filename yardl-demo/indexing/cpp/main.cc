@@ -15,27 +15,33 @@ int main(void) {
   sketch::binary::MyProtocolWriter writer(output);
   writer.WriteHeader(sketch::Header{"John Doe"});
 
+  std::cout << "Writing samples... ";
   size_t sample_count = 0;
-  std::vector<sketch::Sample> samples(77);
+  std::vector<sketch::Sample> samples(44);
   for (auto& sample : samples) {
     sample.id = sample_count++;
-    sample.data = xt::arange<int32_t>(sample_count, sample_count + 1000);
+    sample.data = xt::arange<int32_t>(sample_count, sample_count + 2000);
+    std::cout << sample.id << " ";
   }
+  std::cout << ", ";
 
   writer.WriteSamples(samples);
+
+  samples.resize(22);
+  for (auto& sample : samples) {
+    sample.id = sample_count++;
+    sample.data = xt::arange<int32_t>(sample_count, sample_count + 2000);
+    writer.WriteSamples(sample);
+    std::cout << sample.id << ", ";
+  }
 
   samples.resize(33);
   for (auto& sample : samples) {
     sample.id = sample_count++;
-    sample.data = xt::arange<int32_t>(sample_count, sample_count + 1000);
-    writer.WriteSamples(sample);
+    sample.data = xt::arange<int32_t>(sample_count, sample_count + 2000);
+    std::cout << sample.id << " ";
   }
-
-  samples.resize(55);
-  for (auto& sample : samples) {
-    sample.id = sample_count++;
-    sample.data = xt::arange<int32_t>(sample_count, sample_count + 1000);
-  }
+  std::cout << std::endl;
   writer.WriteSamples(samples);
 
   writer.EndSamples();
@@ -80,9 +86,12 @@ int main(void) {
 
       sketch::Sample sample;
       size_t idx = 0;
+      std::cout << "Reading samples... ";
       while (reader.ReadSamples(sample)) {
         VALIDATE(sample.id == idx++, "Failed to read correct sample");
+        std::cout << sample.id << " ";
       }
+      std::cout << std::endl;
       VALIDATE(reader.CountSamples() == sample_count, "Failed to get correct sample count");
       VALIDATE(idx == sample_count, "Failed to read all samples");
 
@@ -101,17 +110,23 @@ int main(void) {
       std::vector<sketch::Sample> samples;
       samples.reserve(9);
       auto idx = reader.CountSamples() / 2;
+      std::cout << "Reading samples... ";
       VALIDATE(reader.ReadSamples(samples, idx), "Failed to read samples from the middle of the stream");
       for (auto const& sample : samples) {
         VALIDATE(sample.id == idx++, "Failed to read correct sample");
+        std::cout << sample.id << " ";
       }
+      std::cout << ", continuing... ";
 
       // Then, read the *rest* of the stream without specifying an index
       while (reader.ReadSamples(samples)) {
         for (auto& sample : samples) {
           VALIDATE(sample.id == idx++, "Failed to read correct sample");
+          std::cout << sample.id << " ";
         }
+        std::cout << ", ";
       }
+      std::cout << std::endl;
       VALIDATE(idx == sample_count, "Failed to read all samples");
 
       reader.Close();
@@ -135,11 +150,14 @@ int main(void) {
     std::shuffle(indices.begin(), indices.end(), g);
 
 
+    std::cout << "Reading samples... ";
     sketch::Sample sample;
     for (size_t idx : indices) {
       VALIDATE(reader.ReadSamples(sample, idx), "Failed to read sample");
+      std::cout << sample.id << " ";
       VALIDATE(sample.id == idx, "Failed to read correct sample");
     }
+    std::cout << std::endl;
 
     reader.Close();
   }
@@ -152,10 +170,16 @@ int main(void) {
     std::vector<sketch::Sample> samples;
     samples.reserve(3);
     size_t idx = 0;
+    std::cout << "Reading samples... ";
     while (reader.ReadSamples(samples, idx)) {
       // Do something with samples
+      for (auto const& sample : samples) {
+        std::cout << sample.id << " ";
+      }
       idx += samples.size();
+      std::cout << ", ";
     }
+    std::cout << std::endl;
     VALIDATE(idx == sample_count, "Batch read all samples failed");
     reader.Close();
   }
@@ -187,5 +211,6 @@ int main(void) {
     reader.Close();
   }
 
+  std::cout << "Success!" << std::endl;
   return 0;
 }
